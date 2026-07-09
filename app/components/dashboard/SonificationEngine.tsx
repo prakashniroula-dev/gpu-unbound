@@ -231,7 +231,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   };
 
   return (
-    <div className="w-full border-2 border-green-500/50 rounded-lg overflow-hidden">
+    <div className="w-full h-full border-2 border-green-500/50 rounded-lg overflow-hidden">
       <div className="p-4 border-b border-green-500/30">
         <h3 className="text-lg font-mono text-green-500">
           [01] SONIFICATION_ENGINE

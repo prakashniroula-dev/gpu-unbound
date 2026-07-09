@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface SonificationEngineProps {
   telemetry?: {
@@ -21,6 +21,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentState, setCurrentState] = useState<string>('healthy');
 
+  
   useEffect(() => {
     // Cleanup on unmount
     return () => {
@@ -91,16 +92,16 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
       
       // Modify based on state
       if (state === 'memory_bound') {
-        frequency = targetFreq + (Math.random() - 0.5) * 25; // Jitter
+        frequency = targetFreq + (Math.random() - 0.5) * 10; // Jitter
         amplitude = 60;
         ctx.strokeStyle = '#ff4444'; // Red for anomaly
       } else if (state === 'comms_bound') {
-        frequency = 50; // Lower frequency
+        frequency = 50 + (Math.random() - 0.5) * 10; // Lower frequency
         amplitude = 30;
         ctx.strokeStyle = '#ffb300'; // Orange for comms issues
       } else if (state === 'recovery') {
         // Smooth transition back
-        frequency = 130 + (memSat * 1.5 * 0.5);
+        frequency = 130 + (memSat * 1.5 * 0.5) ;
         amplitude = 40;
         ctx.strokeStyle = '#00ff41';
       }

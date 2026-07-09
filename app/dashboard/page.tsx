@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import StatusIndicators from '../components/dashboard/StatusIndicators';
 import IndexCounters from '../components/dashboard/IndexCounters';
 import MetricCard from '../components/dashboard/MetricCard';
@@ -108,6 +108,9 @@ export default function DashboardPage() {
   }, []);
 
   const [telemetry, setTelemetry] = useState(() => getCurrentTelemetry('healthy'));
+  const telemetrySonification = useMemo(() => {
+    return {mem_bandwidth_sat: telemetry.mem_bandwidth_sat, gpu_util: telemetry.gpu_util, state: telemetry.state}
+  }, [telemetry.state])
 
   // Add timeline event
   const addEvent = useCallback((type: TimelineEventType, message: string) => {
@@ -302,7 +305,7 @@ export default function DashboardPage() {
       <main className="flex-1 w-full py-4 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="max-w-7xl">
-            <SonificationEngine telemetry={{mem_bandwidth_sat: telemetry.mem_bandwidth_sat, gpu_util: telemetry.gpu_util, state: telemetry.state}} />
+            <SonificationEngine telemetry={telemetrySonification} />
           </div>
           {/* Top Row: Analysis + Timeline - Unified Collapsible */}
           <div className="w-full border border-cyan-500/50 rounded-lg overflow-hidden mb-4">

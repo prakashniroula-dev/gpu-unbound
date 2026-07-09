@@ -2,7 +2,7 @@
 
 ### 1. Pre-Auth Landing Page (The Conceptual Hook)
 
-* **The Hero Statement:** Displays a monospace banner reading `BLACKBOX_AI // TERMINAL_V6` next to the primary core value proposition: *"The first AI agent that hears your GPU cluster failing – and fixes it before you look at a screen."*
+* **The Hero Statement:** Displays a monospace banner reading `GPU_UNBOUND // TERMINAL_V1` next to the primary core value proposition: *"GPU Unbound: Break free from memory-bound and comms-bound constraints – fully unleashing your GPU cluster's potential."*
 
 * **Web Audio API Active Preview:** Contains an interactive, client-side waveform canvas with a `[ TEST AUDIO CAPABILITY ]` diagnostic button. Clicking this safely runs a localized Web Audio API sandbox loop to demonstrate high-contrast auditory states to user/judge observers before app instantiation:
 
@@ -10,9 +10,7 @@
 * **Healthy State Preview:** Emits a steady, low-frequency 130Hz triangle/sine wave to establish an efficient processing baseline hum.
 
 
-* **Anomalous State Preview:** Alters the frequency vector dynamically into a sharp, jitter-laden pitch spike to mimic extreme operational distress.
-
-
+* **Anomalous State Preview:** Alters the frequency vector dynamically into a sharp, jitter-laden pitch spike to mimic extreme operational distress (memory-bound, comms-bound scenarios).
 
 
 * **The Architectural Pitch:** A strict dual-column layout explicitly highlighting the deep `rocprof` kernel-trace collection method over typical surface-level cluster tracking metrics.

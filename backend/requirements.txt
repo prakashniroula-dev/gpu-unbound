@@ -1,0 +1,29 @@
+# Backend Dependencies for BLACKBOX_AI
+
+# Web Framework
+fastapi==0.110.0
+uvicorn[standard]==0.27.0
+websockets==12.0
+
+# HTTP Client for AI API
+requests==2.31.0
+httpx==0.26.0
+
+# Data Validation
+pydantic==2.5.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# SQLite (built-in, but for async support)
+aiosqlite==0.19.0
+
+# Async Support
+anyio==4.0.0
+
+# Type Hints
+typing-extensions==4.9.0
+
+# Development
+pytest==8.0.0
+pytest-asyncio==0.23.0

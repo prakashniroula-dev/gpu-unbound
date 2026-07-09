@@ -15,11 +15,13 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentState, setCurrentState] = useState<string>('healthy');
+  const [volume, setVolume] = useState(50);
 
   
   useEffect(() => {
@@ -177,12 +179,17 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 2048;
       
+      // Create master gain for volume control
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.setValueAtTime(volume / 100, audioContextRef.current.currentTime);
+      
       // Connect nodes
       osc1.connect(gain1);
       gain1.connect(analyserRef.current);
       osc2.connect(gain2);
       gain2.connect(analyserRef.current);
-      analyserRef.current.connect(audioContextRef.current.destination);
+      analyserRef.current.connect(masterGainRef.current);
+      masterGainRef.current.connect(audioContextRef.current.destination);
       
       // Store references
       oscillatorRef.current = osc1;
@@ -265,6 +272,28 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
           <span className="px-4 py-2 font-mono text-sm text-zinc-400">
             {currentState.toUpperCase()}
           </span>
+          
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="font-mono text-xs text-zinc-500">VOL</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={volume}
+              onChange={(e) => {
+                const newVolume = parseInt(e.target.value);
+                setVolume(newVolume);
+                if (masterGainRef.current && audioContextRef.current) {
+                  masterGainRef.current.gain.setValueAtTime(
+                    newVolume / 100,
+                    audioContextRef.current.currentTime
+                  );
+                }
+              }}
+              className="w-24 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+            />
+            <span className="font-mono text-xs text-zinc-400 w-8">{volume}%</span>
+          </div>
         </div>
       </div>
     </div>

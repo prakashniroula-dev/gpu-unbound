@@ -9,7 +9,7 @@ interface AudioVisualizerProps {
 
 export default function AudioVisualizer({ isPlaying, frequency }: AudioVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const phaseRef = useRef(0);
 
   useEffect(() => {

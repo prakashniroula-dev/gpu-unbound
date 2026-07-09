@@ -5,7 +5,7 @@ import StatusIndicators from '../components/dashboard/StatusIndicators';
 import IndexCounters from '../components/dashboard/IndexCounters';
 import MetricCard from '../components/dashboard/MetricCard';
 import SonificationEngine from '../components/dashboard/SonificationEngine';
-import CognitiveAgentReasoner from '../components/dashboard/CognitiveAgentReasoner';
+import CognitiveAgentReasoner, { AIResponse } from '../components/dashboard/CognitiveAgentReasoner';
 import RootCauseTimeline from '../components/dashboard/RootCauseTimeline';
 import HistoricTelemetryStream from '../components/dashboard/HistoricTelemetryStream';
 
@@ -302,7 +302,7 @@ export default function DashboardPage() {
       <main className="flex-1 w-full py-4 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="max-w-7xl">
-            <SonificationEngine telemetry={telemetry} />
+            <SonificationEngine telemetry={{mem_bandwidth_sat: telemetry.mem_bandwidth_sat, gpu_util: telemetry.gpu_util, state: telemetry.state}} />
           </div>
           {/* Top Row: Analysis + Timeline - Unified Collapsible */}
           <div className="w-full border border-cyan-500/50 rounded-lg overflow-hidden mb-4">
@@ -325,8 +325,7 @@ export default function DashboardPage() {
             {!analysisCollapsed && (
               <div id="analysis-timeline-panel" className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 bg-black/20">
                 <CognitiveAgentReasoner 
-                  jsonStream={aiResponse} 
-                  isAnalyzing={injectionActive}
+                  jsonStream={aiResponse as AIResponse}
                 />
                 <RootCauseTimeline events={events} />
               </div>

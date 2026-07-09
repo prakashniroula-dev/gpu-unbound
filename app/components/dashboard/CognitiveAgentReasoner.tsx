@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-interface AIResponse {
+export interface AIResponse {
   state:
     | "healthy"
     | "memory_bound"

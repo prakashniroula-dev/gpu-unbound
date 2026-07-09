@@ -11,7 +11,6 @@ import {
 } from "recharts";
 
 interface TelemetryPoint {
-  timestamp: number;
   gpu_util: number;
   mem_bandwidth_sat: number;
   power_draw: number;

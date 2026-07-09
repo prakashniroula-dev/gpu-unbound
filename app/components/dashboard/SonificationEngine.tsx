@@ -6,7 +6,7 @@ interface SonificationEngineProps {
   telemetry?: {
     mem_bandwidth_sat?: number;
     gpu_util?: number;
-    state?: 'healthy' | 'memory_bound' | 'comms_bound' | 'recovery';
+    state?: 'applying_solution' | 'verifying' | 'healthy' | 'memory_bound' | 'comms_bound' | 'recovery';
   };
 }
 

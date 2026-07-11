@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../../hooks/useSound';
 
 interface SonificationEngineProps {
@@ -11,12 +11,33 @@ interface SonificationEngineProps {
   };
 }
 
+const STATE_FREQUENCIES: Record<string, number> = {
+  healthy: 131.1,
+  applying_solution: 165.0,
+  verifying: 147.0,
+  memory_bound: 220.0,
+  comms_bound: 98.0,
+  recovery: 140.0,
+};
+
+function getTargetFrequency(state: string, memSat: number): number {
+  const baseFreq = STATE_FREQUENCIES[state] || 131.1;
+  return baseFreq + memSat * 1.5;
+}
+
+function volumeToGain(volume: number): number {
+  const normalized = volume / 100;
+  return Math.pow(normalized, 2.5) * 0.5;
+}
+
 export default function SonificationEngine({ telemetry = {} }: SonificationEngineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const oscillatorsRef = useRef<OscillatorNode[]>([]);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const lfoGainRef = useRef<GainNode | null>(null);
+  const filterRef = useRef<BiquadFilterNode | null>(null);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
 
@@ -25,9 +46,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   const [volume, setVolume] = useState(50);
   const { playSound } = useSound();
 
-  
   useEffect(() => {
-    // Cleanup on unmount
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -37,14 +56,6 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
       }
     };
   }, []);
-
-  useEffect(() => {
-    // Update state based on telemetry
-    if (telemetry.state) {
-      setCurrentState(telemetry.state);
-      startSonification();
-    }
-  }, [telemetry.state]);
 
   const drawWaveform = (data: Uint8Array | null = null) => {
     const canvas = canvasRef.current;
@@ -132,8 +143,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   };
 
   const animate = () => {
-    timeRef.current += 0.05; // Increment time for scrolling effect
-    
+    timeRef.current += 0.05;
     if (analyserRef.current) {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
       analyserRef.current.getByteTimeDomainData(dataArray);
@@ -141,103 +151,168 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
     } else {
       drawWaveform();
     }
-
     animationRef.current = requestAnimationFrame(animate);
   };
 
+  const smoothFrequencyTransition = (targetFreq: number) => {
+    if (!audioContextRef.current || oscillatorsRef.current.length === 0) return;
+    const now = audioContextRef.current.currentTime;
+    const rampDuration = 0.25;
+    oscillatorsRef.current.forEach((osc) => {
+      osc.frequency.linearRampToValueAtTime(targetFreq, now + rampDuration);
+    });
+    if (filterRef.current) {
+      filterRef.current.frequency.linearRampToValueAtTime(
+        Math.min(targetFreq * 3, 800),
+        now + rampDuration
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (telemetry.state) {
+      setCurrentState(telemetry.state);
+      if (!isPlaying) {
+        startSonification();
+      }
+    }
+  }, [telemetry.state]);
+
+  useEffect(() => {
+    if (telemetry.state && isPlaying) {
+      const newFreq = getTargetFrequency(telemetry.state, telemetry.mem_bandwidth_sat || 0);
+      smoothFrequencyTransition(newFreq);
+    }
+  }, [telemetry.state, telemetry.mem_bandwidth_sat, isPlaying]);
+
   const startSonification = async () => {
-    // Stop existing audio
-    stopSonification();
+    if (isPlaying) return;
 
     try {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // Create multiple oscillators for richer sound
-      const oscillators: OscillatorNode[] = [];
-      const gainNodes: GainNode[] = [];
-      
-      // Primary oscillator (triangle wave for smooth sound)
-      const osc1 = audioContextRef.current.createOscillator();
-      osc1.type = 'sine';
-      oscillators.push(osc1);
-      
-      // Secondary oscillator (harmonic)
-      const osc2 = audioContextRef.current.createOscillator();
-      osc2.type = 'sine';
-      oscillators.push(osc2);
-      
-      // Create gain nodes for volume control
-      const gain1 = audioContextRef.current.createGain();
-      const gain2 = audioContextRef.current.createGain();
-      gainNodes.push(gain1, gain2);
-      
-      // Set harmonic relationship
-      osc2.frequency.setValueAtTime(2, audioContextRef.current.currentTime); // Will be scaled
-      
-      // Set volumes
-      gain1.gain.setValueAtTime(0.3, audioContextRef.current.currentTime);
-      gain2.gain.setValueAtTime(0.15, audioContextRef.current.currentTime);
-      
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 2048;
-      
-      // Create master gain for volume control
-      masterGainRef.current = audioContextRef.current.createGain();
-      masterGainRef.current.gain.setValueAtTime(volume / 100, audioContextRef.current.currentTime);
-      
-      // Connect nodes
-      osc1.connect(gain1);
-      gain1.connect(analyserRef.current);
-      osc2.connect(gain2);
-      gain2.connect(analyserRef.current);
-      analyserRef.current.connect(masterGainRef.current);
-      masterGainRef.current.connect(audioContextRef.current.destination);
-      
-      // Store references
-      oscillatorRef.current = osc1;
-      
-      // Start animation
-      animate();
-      
-      // Start oscillators
-      oscillators.forEach(osc => osc.start());
-      
-      setIsPlaying(true);
+      const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+      audioContextRef.current = ctx;
 
+      analyserRef.current = ctx.createAnalyser();
+      analyserRef.current.fftSize = 2048;
+
+      filterRef.current = ctx.createBiquadFilter();
+      filterRef.current.type = 'lowpass';
+      filterRef.current.frequency.setValueAtTime(500, ctx.currentTime);
+      filterRef.current.Q.setValueAtTime(1.0, ctx.currentTime);
+
+      masterGainRef.current = ctx.createGain();
+      masterGainRef.current.gain.setValueAtTime(0, ctx.currentTime);
+
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.setValueAtTime(volumeToGain(volume) * 0.03, ctx.currentTime);
+      lfoGainRef.current = lfoGain;
+
+      const baseFreq = getTargetFrequency(currentState, telemetry.mem_bandwidth_sat || 0);
+
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(baseFreq, ctx.currentTime);
+
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(baseFreq * 1.005, ctx.currentTime);
+
+      const osc3 = ctx.createOscillator();
+      osc3.type = 'sine';
+      osc3.frequency.setValueAtTime(baseFreq * 0.995, ctx.currentTime);
+
+      oscillatorsRef.current = [osc1, osc2, osc3];
+
+      osc1.connect(filterRef.current);
+      osc2.connect(filterRef.current);
+      osc3.connect(filterRef.current);
+
+      filterRef.current.connect(lfoGain);
+      lfoGain.connect(masterGainRef.current);
+
+      masterGainRef.current.connect(analyserRef.current);
+      analyserRef.current.connect(ctx.destination);
+
+      const lfo = ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(0.2, ctx.currentTime);
+
+      const lfoModGain = ctx.createGain();
+      lfoModGain.gain.setValueAtTime(volumeToGain(volume) * 0.04, ctx.currentTime);
+
+      lfo.connect(lfoModGain);
+      lfoModGain.connect(masterGainRef.current.gain);
+
+      oscillatorsRef.current.forEach((osc) => osc.start());
+      lfo.start();
+
+      animate();
+
+      const rampDuration = 0.25;
+      masterGainRef.current.gain.linearRampToValueAtTime(
+        volumeToGain(volume),
+        ctx.currentTime + rampDuration
+      );
+
+      setIsPlaying(true);
     } catch (error) {
       console.error('Audio initialization failed:', error);
     }
   };
 
   const stopSonification = () => {
-    // Stop all oscillators
-    if (oscillatorRef.current) {
-      try {
-        oscillatorRef.current.stop();
-        oscillatorRef.current.disconnect();
-      } catch (e) {
-        // Already stopped
+    if (!isPlaying && !audioContextRef.current) return;
+
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(0, now + 0.25);
+    }
+
+    setTimeout(() => {
+      oscillatorsRef.current.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch (_e) {}
+      });
+      oscillatorsRef.current = [];
+
+      if (lfoGainRef.current) {
+        try {
+          lfoGainRef.current.disconnect();
+        } catch (_e) {}
+        lfoGainRef.current = null;
       }
-      oscillatorRef.current = null;
-    }
-    
-    // Close audio context
-    if (audioContextRef.current) {
-      try {
-        audioContextRef.current.close();
-      } catch (e) {
-        // Already closed
+
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+        } catch (_e) {}
+        audioContextRef.current = null;
       }
-      audioContextRef.current = null;
+
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+
+      setIsPlaying(false);
+    }, 300);
+  };
+
+const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    if (masterGainRef.current && audioContextRef.current) {
+      const targetGain = volumeToGain(newVolume);
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(targetGain, now + 0.1);
+      if (lfoGainRef.current) {
+        lfoGainRef.current.gain.linearRampToValueAtTime(
+          targetGain * 0.03,
+          now + 0.1
+        );
+      }
     }
-    
-    // Stop animation
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-    }
-    
-    setIsPlaying(false);
   };
 
   const stateClass = telemetry.state ? `state-${telemetry.state}` : `state-${currentState}`;
@@ -252,14 +327,14 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
           Real-time waveform monitor
         </p>
       </div>
-      
+
       <canvas
         ref={canvasRef}
         width={1200}
         height={120}
         className="w-full bg-black/20"
       />
-      
+
       <div className="p-3 border-t border-green-500/30">
         <div className="flex gap-2">
           <button
@@ -275,11 +350,11 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
           >
             {isPlaying ? '[ STOP ]' : '[ START ]'}
           </button>
-          
+
           <span className="px-4 py-2 font-mono text-sm text-zinc-400">
             {currentState.toUpperCase()}
           </span>
-          
+
           <div className="flex items-center gap-2 ml-auto">
             <span className="font-mono text-xs text-zinc-500">VOL</span>
             <input
@@ -287,16 +362,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
               min="0"
               max="100"
               value={volume}
-              onChange={(e) => {
-                const newVolume = parseInt(e.target.value);
-                setVolume(newVolume);
-                if (masterGainRef.current && audioContextRef.current) {
-                  masterGainRef.current.gain.setValueAtTime(
-                    newVolume / 100,
-                    audioContextRef.current.currentTime
-                  );
-                }
-              }}
+              onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
               className="w-24 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-500"
             />
             <span className="font-mono text-xs text-zinc-400 w-8">{volume}%</span>

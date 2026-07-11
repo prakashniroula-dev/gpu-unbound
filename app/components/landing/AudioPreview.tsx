@@ -78,7 +78,7 @@ export default function AudioPreview() {
       // Draw label
       ctx.fillStyle = '#00ff41';
       ctx.font = '14px monospace';
-      ctx.fillText('> PREVIEW: 130Hz HEALTHY_STATE (SINE)', 20, height - 20);
+      ctx.fillText('> PREVIEW: 130Hz HEALTHY_STATE (TRIANGLE)', 20, height - 20);
     } else {
       // Draw live waveform
       ctx.strokeStyle = '#00ff41';
@@ -125,9 +125,9 @@ export default function AudioPreview() {
       // Create AudioContext
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      // Create oscillators - sine waves for sonification
+      // Create oscillators - triangle waves for softer sonification
       oscillatorRef.current = audioContextRef.current.createOscillator();
-      oscillatorRef.current.type = 'sine';
+      oscillatorRef.current.type = 'triangle';
       oscillatorRef.current.frequency.setValueAtTime(130, audioContextRef.current.currentTime);
       
       // Create analyser for visualization
@@ -192,7 +192,7 @@ export default function AudioPreview() {
       
       <div className="mt-4 text-center">
         <p className="text-green-500/60 font-mono text-sm">
-          {isPlaying ? '>> EMITTING: 130Hz_HEALTHY_BASELINE' : '>> STATUS: STANDBY'}
+          {isPlaying ? '>> EMITTING: 130Hz_TRIANGLE_BASELINE' : '>> STATUS: STANDBY'}
         </p>
       </div>
     </div>

@@ -74,7 +74,8 @@ export default function RootCauseTimeline({ events = [] }: RootCauseTimelineProp
                 return (
                   <div
                     key={index}
-                    className={`p-2 border-l-2 ${colorClass} bg-current/5`}
+                    className={`p-2 border-l-2 ${colorClass} bg-current/5 timeline-entry`}
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex items-start gap-2">
                       <span className={colorClass}>{symbol}</span>

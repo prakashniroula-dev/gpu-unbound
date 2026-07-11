@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import HeroBanner from './components/landing/HeroBanner';
 import AudioPreview from './components/landing/AudioPreview';
 import ArchitecturePitch from './components/landing/ArchitecturePitch';
 import AudioVisualizer from './components/landing/AudioVisualizer';
 import SonificationEngine from './components/dashboard/SonificationEngine';
+import { useSound } from './hooks/useSound';
 
 // Feature card data
 const CORE_FEATURES = [
@@ -66,12 +68,15 @@ const USE_CASES = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const { playSound } = useSound();
 
   useEffect(() => {
     setMounted(true);
@@ -187,26 +192,30 @@ export default function Home() {
             </p>
             
             <div className="flex flex-wrap gap-4 mb-12">
-              <a
-                href="/sign-in"
-                className="group px-8 py-4 bg-green-500 text-black font-mono font-bold rounded hover:bg-green-400 transition-all"
+              <button
+                onClick={() => {
+                  playSound('ui_click');
+                  setIsTransitioning(true);
+                  setTimeout(() => router.push('/sign-in'), 400);
+                }}
+                className="group px-8 py-4 bg-green-500 text-black font-mono font-bold rounded transition-all btn-click-effect btn-primary border-sweep"
               >
                 <span className="mr-2">{'>'}</span>
                 ENTER_DASHBOARD
                 <span className="ml-2 opacity-60 group-hover:opacity-100">{']'}</span>
-              </a>
-              <a
-                href="#features"
-                className="px-8 py-4 border-2 border-green-500/50 font-mono text-green-500 rounded hover:bg-green-500/10 transition-all"
+              </button>
+              <button
+                onClick={() => playSound('click')}
+                className="px-8 py-4 border-2 border-green-500/50 font-mono text-green-500 rounded hover:bg-green-500/10 transition-all btn-bracket"
               >
                 EXPLORE_FEATURES
-              </a>
+              </button>
             </div>
             
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {STATS.map((stat, i) => (
-                <div key={i} className="border border-green-500/30 bg-black/50 p-6 text-center">
+                <div key={i} className="border border-green-500/30 bg-black/50 p-6 text-center stat-card card-hover">
                   <div className="text-3xl md:text-4xl font-mono font-bold text-green-500 mb-1">
                     {stat.value}
                   </div>
@@ -233,9 +242,9 @@ export default function Home() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {CORE_FEATURES.map((feature, i) => (
-                <div 
-                  key={i} 
-                  className="group border border-green-500/30 bg-black/50 p-6 rounded-lg hover:border-green-500/60 hover:bg-green-500/5 transition-all"
+                <div
+                  key={i}
+                  className="group border border-green-500/30 bg-black/50 p-6 rounded-lg hover:border-green-500/60 hover:bg-green-500/5 transition-all feature-card card-hover"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-2xl font-mono text-green-500">{feature.icon}</span>
@@ -314,11 +323,11 @@ export default function Home() {
               </h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {USE_CASES.map((useCase, i) => (
-                <div 
-                  key={i} 
-                  className="border border-green-500/30 bg-black/50 p-6 rounded-lg hover:bg-green-500/5 transition-all"
+                <div
+                  key={i}
+                  className="border border-green-500/30 bg-black/50 p-6 rounded-lg hover:bg-green-500/5 transition-all usecase-card card-hover"
                 >
                   <h3 className="text-xl font-mono font-bold text-green-500 mb-3">
                     {useCase.title}
@@ -328,9 +337,9 @@ export default function Home() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {useCase.tags.map((tag, j) => (
-                      <span 
-                        key={j} 
-                        className="px-3 py-1 text-xs font-mono bg-green-500/10 text-green-500/80 border border-green-500/30 rounded"
+                      <span
+                        key={j}
+                        className="px-3 py-1 text-xs font-mono bg-green-500/10 text-green-500/80 border border-green-500/30 rounded tag-pill"
                       >
                         {tag}
                       </span>
@@ -338,7 +347,7 @@ export default function Home() {
                   </div>
                 </div>
               ))}
-            </div>
+</div>
           </div>
         </section>
 
@@ -356,7 +365,13 @@ export default function Home() {
               </p>
               <a
                 href="/sign-in"
-                className="inline-block px-12 py-4 border-2 border-green-500 rounded-lg font-mono text-green-500 hover:bg-green-500/10 transition-all text-lg tracking-wider"
+                onClick={(e) => {
+                  e.preventDefault();
+                  playSound('ui_click');
+                  setIsTransitioning(true);
+                  setTimeout(() => router.push('/sign-in'), 400);
+                }}
+                className="inline-block px-12 py-4 border-2 border-green-500 rounded-lg font-mono text-green-500 hover:bg-green-500/10 transition-all text-lg tracking-wider btn-click-effect btn-primary border-sweep"
               >
                 [ ENTER DASHBOARD ]
               </a>
@@ -378,6 +393,30 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Page Transition Overlay */}
+      {isTransitioning && (
+        <div className="fixed inset-0 z-[9999] pointer-events-none">
+          <div className="absolute inset-0 bg-[#0a0a0a] animate-scan-reveal">
+            <div className="scan-line" />
+          </div>
+          <div className="absolute inset-0 animate-pixelate-reveal">
+            {Array.from({ length: 64 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute bg-[#00ff41]"
+                style={{
+                  left: `${(i % 8) * 12.5}%`,
+                  top: `${Math.floor(i / 8) * 12.5}%`,
+                  width: '12.5%',
+                  height: '12.5%',
+                  animationDelay: `${(i % 8) * 30 + Math.floor(i / 8) * 20}ms`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

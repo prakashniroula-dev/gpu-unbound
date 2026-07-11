@@ -40,3 +40,491 @@ body {
 .bg-terminal {
   background-color: var(--terminal-green);
 }
+
+/* Page Transition Animations - Terminal/Glitch Scan Style */
+@keyframes scan-reveal {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    background: #0a0a0a;
+  }
+  50% {
+    clip-path: inset(0 0 0 0);
+    background: #0a0a0a;
+  }
+  100% {
+    clip-path: inset(100% 0 0 0);
+    background: #0a0a0a;
+  }
+}
+
+@keyframes pixelate-in {
+  0% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: scale(1);
+  }
+  50% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: scale(0.98);
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: scale(1);
+  }
+}
+
+.animate-scan-reveal {
+  animation: scan-reveal 400ms ease-out forwards;
+}
+
+.animate-pixelate-reveal > div {
+  animation: pixel-cell-reveal 300ms steps(4) forwards;
+  opacity: 0;
+}
+
+@keyframes pixel-cell-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0) translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1) translateX(2px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) translateX(0);
+  }
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 255, 65, 0.6) 50%,
+    transparent 100%
+  );
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+  animation: scanline-slide 300ms linear forwards;
+}
+
+@keyframes scanline-slide {
+  0% { top: 0; opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Transition overlay */
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #0a0a0a;
+}
+
+.page-transition-overlay.active {
+  animation: overlay-glitch 500ms steps(6) forwards;
+}
+
+@keyframes overlay-glitch {
+  0% {
+    clip-path: inset(0 0 100% 0);
+  }
+  20% {
+    clip-path: inset(0 0 80% 0);
+  }
+  40% {
+    clip-path: inset(30% 0 50% 0);
+  }
+  60% {
+    clip-path: inset(50% 0 30% 0);
+  }
+  80% {
+    clip-path: inset(80% 0 10% 0);
+  }
+  100% {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+/* Button click feedback */
+.btn-click-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-click-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 255, 65, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0ms;
+}
+
+.btn-click-effect:active::after {
+  transform: translateX(0);
+  transition: transform 100ms;
+}
+
+/* ============================================
+   UI POLISH: BUTTON HOVER EFFECTS
+   ============================================ */
+
+/* Primary CTA buttons (green) */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 180ms ease-out;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.4), transparent);
+  transform: translateX(-100%);
+  transition: transform 300ms ease-out;
+}
+
+.btn-primary:hover::before {
+  transform: translateX(100%);
+}
+
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.4), 0 0 40px rgba(0, 255, 65, 0.2);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+/* Fault injection buttons (red/orange) */
+.btn-danger {
+  transition: all 180ms ease-out;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 0 40px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-warning {
+  transition: all 180ms ease-out;
+}
+
+.btn-warning:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.4), 0 0 40px rgba(249, 115, 22, 0.2);
+}
+
+.btn-warning:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Bracket-style buttons - animate brackets on hover */
+.btn-bracket {
+  transition: all 150ms ease-out;
+}
+
+.btn-bracket:hover {
+  letter-spacing: 0.05em;
+}
+
+.btn-bracket:hover .bracket-left {
+  transform: translateX(-3px);
+  opacity: 0.8;
+}
+
+.btn-bracket:hover .bracket-right {
+  transform: translateX(3px);
+  opacity: 0.8;
+}
+
+.bracket-left, .bracket-right {
+  display: inline-block;
+  transition: transform 150ms ease-out, opacity 150ms ease-out;
+}
+
+/* STOP button distinct hover */
+.btn-stop:hover {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.6), 0 0 50px rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ============================================
+   UI POLISH: CARD HOVER EFFECTS
+   ============================================ */
+
+.card-hover {
+  transition: all 200ms ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 255, 65, 0.8);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 65, 0.1);
+}
+
+/* Stat blocks */
+.stat-card {
+  transition: all 200ms ease-out;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 255, 65, 0.8);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 65, 0.15);
+}
+
+/* Feature cards */
+.feature-card {
+  transition: all 200ms ease-out;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 255, 65, 0.8);
+  background-color: rgba(0, 255, 65, 0.05);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 65, 0.1);
+}
+
+/* Use case cards */
+.usecase-card {
+  transition: all 200ms ease-out;
+}
+
+.usecase-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 255, 65, 0.6);
+  background-color: rgba(0, 255, 65, 0.03);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 255, 65, 0.08);
+}
+
+/* Tag pills hover */
+.tag-pill {
+  transition: all 150ms ease-out;
+}
+
+.tag-pill:hover {
+  background-color: rgba(0, 255, 65, 0.2);
+  border-color: rgba(0, 255, 65, 0.6);
+  color: rgba(0, 255, 65, 0.9);
+}
+
+/* ============================================
+   UI POLISH: WAVEFORM STATE PULSE
+   ============================================ */
+
+.waveform-panel {
+  position: relative;
+}
+
+.waveform-panel::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+/* Healthy state - calm green pulse */
+.waveform-panel.state-healthy::after {
+  border: 2px solid rgba(0, 255, 65, 0.4);
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2), inset 0 0 20px rgba(0, 255, 65, 0.05);
+  animation: pulse-healthy 2s ease-in-out infinite;
+}
+
+/* Degraded/fault states - urgent amber/red pulse */
+.waveform-panel.state-memory_bound::after,
+.waveform-panel.state-comms_bound::after {
+  border: 2px solid rgba(249, 115, 22, 0.5);
+  box-shadow: 0 0 25px rgba(249, 115, 22, 0.3), inset 0 0 20px rgba(249, 115, 22, 0.1);
+  animation: pulse-urgent 800ms ease-in-out infinite;
+}
+
+/* Failed state - red pulse */
+.waveform-panel.state-failed::after {
+  border: 2px solid rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.4), inset 0 0 25px rgba(239, 68, 68, 0.15);
+  animation: pulse-critical 500ms ease-in-out infinite;
+}
+
+/* Recovery state - transitional pulse */
+.waveform-panel.state-recovery::after,
+.waveform-panel.state-verifying::after,
+.waveform-panel.state-applying_solution::after {
+  border: 2px solid rgba(0, 255, 65, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.15), inset 0 0 15px rgba(0, 255, 65, 0.05);
+  animation: pulse-recovery 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-healthy {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes pulse-critical {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes pulse-recovery {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.7; }
+}
+
+/* ============================================
+   UI POLISH: TIMELINE ENTRY ANIMATIONS
+   ============================================ */
+
+.timeline-entry {
+  animation: timeline-slide-in 300ms ease-out forwards;
+}
+
+@keyframes timeline-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   UI POLISH: JSON STREAM FADE-IN
+   ============================================ */
+
+.json-stream-update {
+  animation: json-fade-in 200ms ease-out forwards;
+}
+
+@keyframes json-fade-in {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* ============================================
+   UI POLISH: CRT SCANLINE OVERLAY
+   ============================================ */
+
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.03) 0px,
+    rgba(0, 0, 0, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}
+
+.crt-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+}
+
+/* ============================================
+   UI POLISH: PREFERS-REDDUCED-MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-scan-reveal,
+  .animate-pixelate-reveal > div,
+  .scan-line,
+  .pulse-healthy,
+  .pulse-urgent,
+  .pulse-critical,
+  .pulse-recovery,
+  .timeline-entry,
+  .json-stream-update,
+  .crt-overlay {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .crt-overlay {
+    display: none;
+  }
+}
+
+/* ============================================
+   ADDITIONAL MICRO-INTERACTIONS
+   ============================================ */
+
+/* Input focus glow */
+input:focus, select:focus {
+  box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.3), 0 0 15px rgba(0, 255, 65, 0.1);
+}
+
+/* Toggle button animation */
+.toggle-indicator {
+  transition: all 200ms ease-out;
+}
+
+/* Loading spinner subtle glow */
+.animate-spin {
+  filter: drop-shadow(0 0 8px rgba(0, 255, 65, 0.4));
+}
+
+/* Border sweep on primary buttons */
+.border-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.border-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  transition: left 400ms ease-out;
+}
+
+.border-sweep:hover::after {
+  left: 100%;
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSound } from '../../hooks/useSound';
 
 const CLUSTER_PROFILES = [
   { id: 'amd_cloud_sandbox', name: 'AMD Cloud Sandbox' },
@@ -15,6 +16,7 @@ export default function ClusterHookForm() {
   const [profile, setProfile] = useState<string>(CLUSTER_PROFILES[0].id);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { playSound } = useSound();
 
   useEffect(() => {
     const handleShow = () => {
@@ -159,7 +161,8 @@ export default function ClusterHookForm() {
 
         <button
           type="submit"
-          className="w-full py-4 px-6 border-2 border-green-500 rounded-lg font-mono text-green-500 hover:bg-green-500/10 transition-all text-lg tracking-wider"
+          onClick={() => playSound('click')}
+          className="w-full py-4 px-6 border-2 border-green-500 rounded-lg font-mono text-green-500 hover:bg-green-500/10 transition-all text-lg tracking-wider btn-click-effect btn-primary border-sweep"
         >
           [ ESTABLISH CONNECTION ]
         </button>

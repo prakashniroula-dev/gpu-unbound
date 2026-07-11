@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import StatusIndicators from '../components/dashboard/StatusIndicators';
 import IndexCounters from '../components/dashboard/IndexCounters';
 import MetricCard from '../components/dashboard/MetricCard';
@@ -8,6 +8,7 @@ import SonificationEngine from '../components/dashboard/SonificationEngine';
 import CognitiveAgentReasoner, { AIResponse } from '../components/dashboard/CognitiveAgentReasoner';
 import RootCauseTimeline from '../components/dashboard/RootCauseTimeline';
 import HistoricTelemetryStream from '../components/dashboard/HistoricTelemetryStream';
+import { useFaultInjectionSounds, useDashboardSounds } from '../hooks/useSound';
 
 // Type for system state
 type SystemState = 'healthy' | 'memory_bound' | 'comms_bound' | 'recovery' | 'verifying' | 'applying_solution';
@@ -37,6 +38,10 @@ export default function DashboardPage() {
     evidence: string;
     action?: string;
   } | null>(null);
+
+  // Sound system - preloading handled by child hooks
+  const previousStateRef = useRef<string>('healthy');
+  const { playClickSound, debouncedClick } = useDashboardSounds();
 
   // Base healthy telemetry values
   const baseTelemetry = {
@@ -112,6 +117,9 @@ export default function DashboardPage() {
     return {mem_bandwidth_sat: telemetry.mem_bandwidth_sat, gpu_util: telemetry.gpu_util, state: telemetry.state}
   }, [telemetry.state])
 
+  // Handle fault injection state transitions (must be after telemetry declaration)
+  useFaultInjectionSounds(telemetry.state, previousStateRef);
+
   // Add timeline event
   const addEvent = useCallback((type: TimelineEventType, message: string) => {
     const newEvent: TimelineEvent = {
@@ -126,7 +134,8 @@ export default function DashboardPage() {
   // Inject fault - starts 10 second cycle
   const injectFault = useCallback((type: 'memory_bound' | 'comms_bound') => {
     if (injectionActive) return; // Prevent multiple injections
-    
+
+    playClickSound(); // Play click sound for button press
     setInjectionActive(true);
     setInjectionType(type);
     
@@ -190,11 +199,12 @@ export default function DashboardPage() {
         evidence: 'All metrics within normal ranges - Recovery successful',
       });
     }, 10000);
-  }, [injectionActive, addEvent, getCurrentTelemetry]);
+  }, [injectionActive, addEvent, getCurrentTelemetry, playClickSound]);
 
   const deployAIRecommendation = useCallback(() => {
     if (!aiResponse || !injectionActive) return;
-    
+
+    playClickSound();
     addEvent('SOLUTION', `Manually deploying: ${aiResponse.action}`);
     setTelemetry(getCurrentTelemetry('applying_solution'));
     
@@ -265,34 +275,37 @@ export default function DashboardPage() {
           
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setAutoMode(!autoMode)}
-              className={`px-4 py-2 font-mono text-sm border-2 rounded transition-all ${
+              onClick={() => {
+                debouncedClick('autoMode');
+                setAutoMode(!autoMode);
+              }}
+              className={`px-4 py-2 font-mono text-sm border-2 rounded transition-all btn-click-effect btn-bracket ${
                 autoMode
-                  ? 'border-green-500 text-green-500 hover:bg-green-500/10'
+                  ? 'border-green-500 text-green-500 hover:bg-green-500/10 hover:border-green-400'
                   : 'border-orange-500 text-orange-500 hover:bg-orange-500/10'
               }`}
             >
               [ {autoMode ? 'AUTO MODE' : 'MANUAL MODE'} ]
             </button>
-            
+
             <button
               onClick={() => injectFault('memory_bound')}
               disabled={injectionActive}
-              className={`px-4 py-2 font-mono text-sm border-2 rounded transition-all ${
-                injectionActive 
-                  ? 'border-red-500/30 text-red-500/30 cursor-not-allowed' 
+              className={`px-4 py-2 font-mono text-sm border-2 rounded transition-all btn-danger btn-bracket ${
+                injectionActive
+                  ? 'border-red-500/30 text-red-500/30 cursor-not-allowed'
                   : 'border-red-500 text-red-500 hover:bg-red-500/10'
               }`}
             >
               {injectionActive && injectionType === 'memory_bound' ? '[ ACTIVE... ]' : '[ INJECT MEM FAULT ]'}
             </button>
-            
+
             <button
               onClick={() => injectFault('comms_bound')}
               disabled={injectionActive}
-              className={`px-4 py-2 font-mono text-sm border-2 rounded transition-all ${
+              className={`px-4 py-2 font-mono text-sm border-2 rounded transition-all btn-warning btn-bracket ${
                 injectionActive
-                  ? 'border-orange-500/30 text-orange-500/30 cursor-not-allowed' 
+                  ? 'border-orange-500/30 text-orange-500/30 cursor-not-allowed'
                   : 'border-orange-500 text-orange-500 hover:bg-orange-500/10'
               }`}
             >
@@ -311,8 +324,11 @@ export default function DashboardPage() {
           <div className="w-full border border-cyan-500/50 rounded-lg overflow-hidden mb-4">
             <button
               type="button"
-              className="w-full p-3 border-b border-cyan-500/30 flex items-center justify-between cursor-pointer hover:bg-cyan-500/5"
-              onClick={() => setAnalysisCollapsed(!analysisCollapsed)}
+              className="w-full p-3 border-b border-cyan-500/30 flex items-center justify-between cursor-pointer hover:bg-cyan-500/5 btn-click-effect"
+              onClick={() => {
+                debouncedClick('analysisToggle');
+                setAnalysisCollapsed(!analysisCollapsed);
+              }}
               aria-expanded={!analysisCollapsed}
               aria-controls="analysis-timeline-panel"
             >
@@ -389,13 +405,16 @@ export default function DashboardPage() {
                 </p>
                 <button
                   onClick={deployAIRecommendation}
-                  className="w-full px-8 py-4 bg-green-500/10 border-2 border-green-500 text-green-500 hover:bg-green-500/20 font-mono rounded transition-all"
+                  className="w-full px-8 py-4 bg-green-500/10 border-2 border-green-500 text-green-500 hover:bg-green-500/20 font-mono rounded transition-all btn-click-effect btn-primary"
                 >
                   [ CONFIRM AND APPLY ]
                 </button>
                 <button
-                  onClick={() => setAutoMode(true)}
-                  className="mt-4 w-full px-8 py-4 border-2 border-zinc-600 text-zinc-400 hover:bg-zinc-600/10 font-mono rounded transition-all"
+                  onClick={() => {
+                    debouncedClick('cancel');
+                    setAutoMode(true);
+                  }}
+                  className="mt-4 w-full px-8 py-4 border-2 border-zinc-600 text-zinc-400 hover:bg-zinc-600/10 font-mono rounded transition-all btn-click-effect btn-bracket"
                 >
                   [ CANCEL ]
                 </button>

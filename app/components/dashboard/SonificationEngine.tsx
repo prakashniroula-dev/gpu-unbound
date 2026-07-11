@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSound } from '../../hooks/useSound';
 
 interface SonificationEngineProps {
   telemetry?: {
@@ -18,10 +19,11 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   const masterGainRef = useRef<GainNode | null>(null);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
-  
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentState, setCurrentState] = useState<string>('healthy');
   const [volume, setVolume] = useState(50);
+  const { playSound } = useSound();
 
   
   useEffect(() => {
@@ -238,8 +240,10 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
     setIsPlaying(false);
   };
 
+  const stateClass = telemetry.state ? `state-${telemetry.state}` : `state-${currentState}`;
+
   return (
-    <div className="w-full h-full border-2 border-green-500/50 rounded-lg overflow-hidden">
+    <div className={`w-full h-full border-2 border-green-500/50 rounded-lg overflow-hidden waveform-panel ${stateClass}`}>
       <div className="p-4 border-b border-green-500/30">
         <h3 className="text-lg font-mono text-green-500">
           [01] SONIFICATION_ENGINE
@@ -259,10 +263,13 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
       <div className="p-3 border-t border-green-500/30">
         <div className="flex gap-2">
           <button
-            onClick={isPlaying ? stopSonification : startSonification}
-            className={`px-4 py-2 font-mono text-sm border-2 rounded ${
+            onClick={() => {
+              playSound('click');
+              isPlaying ? stopSonification() : startSonification();
+            }}
+            className={`px-4 py-2 font-mono text-sm border-2 rounded btn-click-effect ${
               isPlaying
-                ? 'border-red-500 text-red-500'
+                ? 'border-red-500 text-red-500 btn-stop'
                 : 'border-green-500 text-green-500 hover:bg-green-500/10'
             }`}
           >

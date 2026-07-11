@@ -4,7 +4,7 @@ export default function HeroSection() {
       {/* Banner Header */}
       <div className="border-2 border-green-500 bg-black p-4 mb-6">
         <h1 className="font-mono text-2xl md:text-3xl font-bold text-green-400 tracking-wider">
-          BLACKBOX_AI // TERMINAL_V6
+          GPU_UNBOUND // TERMINAL_V1
         </h1>
       </div>
 

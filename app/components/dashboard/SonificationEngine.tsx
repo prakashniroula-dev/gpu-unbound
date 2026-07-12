@@ -41,10 +41,20 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
 
+  // Refs to hold latest props for the drawing loop
+  const telemetryRef = useRef(telemetry);
+  const stateRef = useRef<string>('healthy');
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentState, setCurrentState] = useState<string>('healthy');
   const [volume, setVolume] = useState(50);
   const { playSound } = useSound();
+
+  // Keep refs in sync with latest values on every render
+  useEffect(() => {
+    telemetryRef.current = telemetry;
+    stateRef.current = telemetry.state || currentState;
+  });
 
   useEffect(() => {
     return () => {
@@ -89,23 +99,23 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
       ctx.stroke();
     }
 
-    // Draw waveform based on state
-    ctx.strokeStyle = '#00ff41';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-
-    const state = telemetry.state || currentState;
-    const memSat = telemetry.mem_bandwidth_sat || 0;
-    
+    // Draw waveform based on state – read from refs to get latest values
+    const state = stateRef.current;
+    const memSat = telemetryRef.current.mem_bandwidth_sat || 0;
     
     // Calculate target frequency: f = 130Hz + (mem_bandwidth_sat × 1.5)
     const targetFreq = 130 + (memSat * 1.5);
     
+    // Set default style
+    ctx.strokeStyle = '#00ff41';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
     for (let x = 0; x < width; x++) {
       let frequency = targetFreq;
       let amplitude = 40;
       
-      // Modify based on state
+      // Modify based on state – apply the correct colors and erratic patterns
       if (state === 'memory_bound') {
         frequency = targetFreq + (Math.random() - 0.5) * 10; // Jitter
         amplitude = 60;
@@ -116,7 +126,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
         ctx.strokeStyle = '#ffb300'; // Orange for comms issues
       } else if (state === 'recovery') {
         // Smooth transition back
-        frequency = 130 + (memSat * 1.5 * 0.5) ;
+        frequency = 130 + (memSat * 1.5 * 0.5);
         amplitude = 40;
         ctx.strokeStyle = '#00ff41';
       }
@@ -300,7 +310,7 @@ export default function SonificationEngine({ telemetry = {} }: SonificationEngin
     }, 300);
   };
 
-const handleVolumeChange = (newVolume: number) => {
+  const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
     if (masterGainRef.current && audioContextRef.current) {
       const targetGain = volumeToGain(newVolume);

@@ -1,0 +1,5 @@
+# Test dependencies for BlackBox AI GPU Telemetry Backend
+
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0  # Required for FastAPI TestClient
